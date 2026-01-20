@@ -26,8 +26,9 @@ const CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
 const BOT_USER_ID = process.env.BOT_USER_ID; // Set after first run
 
 // Validate required env vars
-if (!process.env.DISCORD_TOKEN) {
-  console.error("DISCORD_TOKEN required in .env");
+const DISCORD_TOKEN = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
+if (!DISCORD_TOKEN) {
+  console.error("DISCORD_TOKEN or DISCORD_BOT_TOKEN required in .env");
   process.exit(1);
 }
 if (!CHANNEL_ID) {
@@ -234,4 +235,4 @@ process.on('SIGINT', () => {
 
 // Start the bot
 console.log("Starting Synthetic Buddy bot...");
-client.login(process.env.DISCORD_TOKEN);
+client.login(DISCORD_TOKEN);
