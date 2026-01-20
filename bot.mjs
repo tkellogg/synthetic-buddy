@@ -25,8 +25,8 @@ const MODEL = process.env.MODEL || "mlx-community/GLM-4.7-Flash-4bit";
 const CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
 const BOT_USER_ID = process.env.BOT_USER_ID; // Set after first run
 
-// Validate required env vars
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
+// Validate required env vars - use DISCORD_BOT_TOKEN explicitly (not DISCORD_TOKEN from global env)
+const DISCORD_TOKEN = process.env.DISCORD_BOT_TOKEN;
 if (!DISCORD_TOKEN) {
   console.error("DISCORD_TOKEN or DISCORD_BOT_TOKEN required in .env");
   process.exit(1);
