@@ -1,19 +1,32 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "mlx-local/mlx-community/GLM-4.7-Flash-4bit",
   "provider": {
     "mlx-local": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "MLX Local (GLM-4.7-Flash)",
       "options": {
-        "baseURL": "https://dom-replica-consciousness-lake.trycloudflare.com/v1"
+        "baseURL": "{env:MLX_BASE_URL}"
       },
       "models": {
         "mlx-community/GLM-4.7-Flash-4bit": {
-          "name": "GLM-4.7-Flash (Q4)"
-        },
-        "Qwen/Qwen3-4B-MLX-bf16": {
-          "name": "Qwen3-4B"
+          "name": "GLM-4.7-Flash (Q4)",
+          "limit": {
+            "context": 32000,
+            "output": 4000
+          }
         }
+      }
+    }
+  },
+  "mcp": {
+    "discord": {
+      "type": "local",
+      "command": ["node", "mcp/discord-mcp.mjs"],
+      "enabled": true,
+      "environment": {
+        "SYNTH_CHANNEL_ID": "{env:SYNTH_CHANNEL_ID}",
+        "SYNTH_DISCORD_TOKEN": "{env:SYNTH_DISCORD_TOKEN}"
       }
     }
   }
