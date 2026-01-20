@@ -1,0 +1,20 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "mlx-local": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "MLX Local (GLM-4.7-Flash)",
+      "options": {
+        "baseURL": "https://dom-replica-consciousness-lake.trycloudflare.com/v1"
+      },
+      "models": {
+        "mlx-community/GLM-4.7-Flash-4bit": {
+          "name": "GLM-4.7-Flash (Q4)"
+        },
+        "Qwen/Qwen3-4B-MLX-bf16": {
+          "name": "Qwen3-4B"
+        }
+      }
+    }
+  }
+}

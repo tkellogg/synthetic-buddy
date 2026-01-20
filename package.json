@@ -1,0 +1,17 @@
+{
+  "name": "synthetic-buddy",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@opencode-ai/sdk": "^1.1.26",
+    "openai": "^6.16.0",
+    "opencode-ai": "^1.1.26"
+  }
+}
