@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "bot": "node bot.mjs",
+    "chat": "node conversation.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,6 +13,8 @@
   "description": "",
   "dependencies": {
     "@opencode-ai/sdk": "^1.1.26",
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.2.3",
     "openai": "^6.16.0",
     "opencode-ai": "^1.1.26"
   }
