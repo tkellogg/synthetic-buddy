@@ -111,36 +111,162 @@ function logConversation(userMessage, response, metadata = {}) {
   console.log(`Logged to ${filepath}`);
 }
 
+// Tool definitions
+const tools = [
+  {
+    type: "function",
+    function: {
+      name: "check_time",
+      description: "Get the current time and date",
+      parameters: { type: "object", properties: {}, required: [] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "take_note",
+      description: "Append a note to your notes file. Use this to remember things.",
+      parameters: {
+        type: "object",
+        properties: {
+          note: { type: "string", description: "The note content to save" }
+        },
+        required: ["note"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "read_file",
+      description: "Read the contents of a file in your scaffolding/ directory",
+      parameters: {
+        type: "object",
+        properties: {
+          filename: { type: "string", description: "The filename to read (within scaffolding/)" }
+        },
+        required: ["filename"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_files",
+      description: "List files in your scaffolding/ directory",
+      parameters: { type: "object", properties: {}, required: [] }
+    }
+  }
+];
+
+// Tool implementations
+async function executeTool(name, args) {
+  console.log(`Executing tool: ${name}`, args);
+
+  switch (name) {
+    case "check_time":
+      return new Date().toISOString();
+
+    case "take_note": {
+      const notePath = path.join('scaffolding', 'notes.md');
+      const timestamp = new Date().toISOString();
+      const entry = `\n[${timestamp}] ${args.note}`;
+      fs.appendFileSync(notePath, entry);
+      return `Note saved: "${args.note}"`;
+    }
+
+    case "read_file": {
+      const safeName = path.basename(args.filename); // prevent path traversal
+      const filePath = path.join('scaffolding', safeName);
+      if (!fs.existsSync(filePath)) {
+        return `File not found: ${safeName}`;
+      }
+      return fs.readFileSync(filePath, 'utf-8');
+    }
+
+    case "list_files": {
+      const files = fs.readdirSync('scaffolding');
+      return files.join('\n');
+    }
+
+    default:
+      return `Unknown tool: ${name}`;
+  }
+}
+
 /**
- * Send message to GLM and get response
+ * Send message to GLM and get response (with tool calling loop)
  */
 async function chat(messages) {
   const startTime = Date.now();
+  let allMessages = [
+    { role: "system", content: systemPrompt },
+    ...messages
+  ];
+  let toolCallsMade = [];
 
   try {
-    const completion = await llm.chat.completions.create({
-      model: MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages
-      ],
-      max_tokens: 2000,
-    });
+    // Tool calling loop - keep going until we get a final response
+    while (true) {
+      const completion = await llm.chat.completions.create({
+        model: MODEL,
+        messages: allMessages,
+        tools: tools,
+        max_tokens: 2000,
+      });
 
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    const msg = completion.choices[0].message;
+      const msg = completion.choices[0].message;
+      const finishReason = completion.choices[0].finish_reason;
 
-    console.log(`Response in ${elapsed}s`);
-    if (msg.reasoning) {
-      console.log(`Reasoning: ${msg.reasoning.slice(0, 200)}...`);
+      console.log(`Finish reason: ${finishReason}`);
+
+      // Check if model wants to call tools
+      if (msg.tool_calls && msg.tool_calls.length > 0) {
+        console.log(`Tool calls requested: ${msg.tool_calls.length}`);
+
+        // Add assistant message with tool calls
+        allMessages.push(msg);
+
+        // Execute each tool call
+        for (const toolCall of msg.tool_calls) {
+          const name = toolCall.function.name;
+          let args = {};
+          try {
+            args = JSON.parse(toolCall.function.arguments || '{}');
+          } catch (e) {
+            console.error(`Failed to parse tool args: ${toolCall.function.arguments}`);
+          }
+
+          const result = await executeTool(name, args);
+          toolCallsMade.push({ name, args, result });
+
+          // Add tool result
+          allMessages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: String(result)
+          });
+        }
+
+        // Continue the loop to get final response
+        continue;
+      }
+
+      // No tool calls - we have our final response
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`Response in ${elapsed}s`);
+      if (msg.reasoning) {
+        console.log(`Reasoning: ${msg.reasoning.slice(0, 200)}...`);
+      }
+
+      return {
+        content: msg.content,
+        reasoning: msg.reasoning,
+        elapsed: parseFloat(elapsed),
+        usage: completion.usage,
+        tool_calls: toolCallsMade.length > 0 ? toolCallsMade : undefined,
+      };
     }
-
-    return {
-      content: msg.content,
-      reasoning: msg.reasoning,
-      elapsed: parseFloat(elapsed),
-      usage: completion.usage,
-    };
   } catch (error) {
     console.error("LLM error:", error.message);
     throw error;
