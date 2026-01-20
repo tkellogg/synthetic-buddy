@@ -212,7 +212,7 @@ async function chat(messages) {
         model: MODEL,
         messages: allMessages,
         tools: tools,
-        max_tokens: 2000,
+        max_tokens: 4000,
       });
 
       const msg = completion.choices[0].message;
