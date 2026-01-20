@@ -294,8 +294,8 @@ client.on('messageCreate', async (message) => {
   // Ignore own messages
   if (message.author.id === client.user.id) return;
 
-  // Ignore bots (except potentially Strix if we want inter-bot chat)
-  if (message.author.bot) return;
+  // Allow messages from Strix (BOT_USER_ID), ignore other bots
+  if (message.author.bot && message.author.id !== BOT_USER_ID) return;
 
   // Skip if already processing
   if (processing) {
