@@ -62,8 +62,9 @@ let processing = false;
 
 /**
  * Load conversation history from Discord channel
+ * Reduced limit to prevent OOMs - large input causes memory pressure
  */
-async function loadDiscordHistory(channel, limit = 50) {
+async function loadDiscordHistory(channel, limit = 15) {
   const messages = [];
   const fetched = await channel.messages.fetch({ limit });
 
@@ -71,13 +72,16 @@ async function loadDiscordHistory(channel, limit = 50) {
   const sorted = [...fetched.values()].sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
   for (const msg of sorted) {
+    // Truncate individual messages to prevent bloat
+    const content = msg.content.slice(0, 500);
+
     // Skip bot's own messages for context (we'll add them as assistant)
     if (msg.author.id === client.user.id) {
-      messages.push({ role: "assistant", content: msg.content });
+      messages.push({ role: "assistant", content });
     } else {
       // Include who said it in the content
       const author = msg.author.username;
-      messages.push({ role: "user", content: `[${author}]: ${msg.content}` });
+      messages.push({ role: "user", content: `[${author}]: ${content}` });
     }
   }
 
