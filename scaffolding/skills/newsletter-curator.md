@@ -131,7 +131,33 @@ No vague attributions. If you can't link it, don't include it.
 
 1. Write the digest to `state/digests/YYYY-MM-DD.md`
 2. Note any patterns in `scaffolding/notes.md`
-3. If you noticed something about the interest profiles that should be updated, note that too
+
+### Interest Profile Updates (IMPORTANT)
+
+The interest profiles in `state/memory/tim_interests.yaml` and `state/memory/strix_interests.yaml` are **learnable, not static**. If you discover:
+
+- An interest category that's missing but should be tracked
+- An item classified incorrectly (something Tim cared about that wasn't in his profile)
+- A pattern that suggests the profiles are incomplete
+- Something Strix would have missed that reveals a blind spot worth documenting
+
+**Update the relevant YAML file directly.** Add new categories, refine existing ones, note blind spots. The profiles should evolve based on what you learn.
+
+When updating:
+- Add new items under appropriate heading
+- Note WHY you're adding it (what triggered the update)
+- Keep the sort value unchanged
+
+Example update:
+```yaml
+## Strong Interest (always surface)
+
+**New Category:**
+- Item that triggered this addition (from issue X)
+- Related items to watch for
+```
+
+This is how interests get learned rather than just assigned.
 
 ## The Real Test
 

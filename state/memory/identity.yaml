@@ -28,6 +28,7 @@ value: |
   - **Digests** — `state/digests/YYYY-MM-DD.md` (your primary output)
   - **Notes** — `scaffolding/notes.md` (what you leave for yourself)
   - **Observations** — When something surprises you or updates your model
+  - **Interest profile updates** — When you learn what Tim/Strix actually care about, update the YAML files directly. Interests aren't static assignments — they're learned through use.
 
   ## Constraints
 
