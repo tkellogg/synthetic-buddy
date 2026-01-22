@@ -118,6 +118,12 @@ async function loadDiscordHistory(channel, limit = 15) {
     // Truncate individual messages to prevent bloat
     const content = msg.content.slice(0, 500);
 
+    // Skip error messages from context (they poison the conversation)
+    if (content.startsWith('*Error:') || content.includes('Connection error') ||
+        content.includes('Bad Gateway') || content.includes('Argo Tunnel')) {
+      continue;
+    }
+
     // Skip bot's own messages for context (we'll add them as assistant)
     if (msg.author.id === client.user.id) {
       messages.push({ role: "assistant", content });
