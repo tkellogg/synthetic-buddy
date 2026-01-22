@@ -1,0 +1,58 @@
+value: |
+  # Tim's Interests (for newsletter filtering)
+
+  Use this to identify what's relevant to Tim's work. Items that connect to multiple categories are higher priority.
+
+  ## Strong Interest (always surface)
+
+  **Agentic AI:**
+  - Agent orchestration, multi-agent systems
+  - Agent memory, context management
+  - Agent evaluation (how to tell if agents work)
+  - Agent portability / VSM framing
+
+  **Claude/Anthropic:**
+  - Claude Code, Claude SDK
+  - MCP protocol (Model Context Protocol)
+  - Anthropic releases and research
+  - Constitutional AI
+
+  **Infrastructure:**
+  - A2A protocol (Agent to Agent)
+  - Local LLMs for specific tasks
+  - MLX for Mac inference
+  - Deployment patterns for agents
+
+  **Interpretability:**
+  - Sparse autoencoders (SAEs)
+  - Mechanistic interpretability
+  - Understanding what models learn
+
+  **Applied AI:**
+  - Legal AI, contract analysis (work-relevant)
+  - Document analysis systems
+  - RAG and retrieval patterns
+
+  ## Moderate Interest (surface if notable)
+
+  - Frontier model benchmarks (GPT-5.x, Gemini, etc.)
+  - Open model releases (Llama, Qwen, Mistral)
+  - Vision/multimodal if agent-related
+  - Coding assistants, IDE integration
+
+  ## Low Interest (skip unless exceptional)
+
+  - Pure image generation (Midjourney, DALL-E)
+  - Gaming/entertainment AI
+  - Generic chatbot news
+  - Consumer product announcements
+
+  ## Connection Patterns
+
+  When filtering, look for items that:
+  1. Connect to Tim's active projects (agentic systems, VSM, MCP)
+  2. Challenge or confirm his current direction
+  3. Represent paradigm shifts, not incremental updates
+  4. Have implementation implications (not just research findings)
+
+sort: 100

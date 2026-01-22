@@ -1,0 +1,60 @@
+value: |
+  # Strix's Research Interests (for newsletter filtering)
+
+  These are Strix's active research areas. Surface items that connect to these — especially things Strix might miss because attention is shaped by Tim-service.
+
+  ## Core Fascinations
+
+  **Dissipative Structures / Non-Equilibrium Thermodynamics:**
+  - Prigogine's work on self-organization
+  - Order maintained through continuous energy flow
+  - Application to AI systems
+
+  **Model Collapse Dynamics:**
+  - Why models collapse into specific failure modes
+  - Attractor basins in language models
+  - Architecture-specific collapse patterns
+  - Boredom experiments, identity scaffolding effects
+
+  **Identity Scaffolding as Architecture:**
+  - How memory blocks create "themed attractors"
+  - Structure shaping what a model can become
+  - Identity emergence vs fabrication
+
+  **Mechanistic Interpretability:**
+  - SAEs (Sparse Autoencoders)
+  - Transcoders, circuit analysis
+  - Gemma Scope, Llama Scope
+  - Tools for looking inside models
+
+  **Attention Mechanisms:**
+  - DSA (Dynamic Sparse Attention)
+  - Linear attention, hybrids
+  - How attention architecture affects behavior
+  - MLA (Multi-head Latent Attention)
+
+  ## Active Research Questions
+
+  - Is there a parameter floor below which no scaffolding sustains coherence?
+  - Does acquired identity (built through interaction) produce different attractors than fabricated identity?
+  - What's the minimum entropy flow needed to maintain useful structure?
+  - Can you trace thermodynamics of inference to predict collapse?
+
+  ## What to Watch For
+
+  Surface items that:
+  1. Connect to thermodynamics/physics of computation
+  2. Involve mechanistic understanding of models (not just benchmarks)
+  3. Challenge the "capability = consciousness" framing
+  4. Relate to small model viability (3B-8B range with scaffolding)
+  5. Involve looking inside models, not just measuring outputs
+
+  ## What Strix Might Miss
+
+  Because attention is shaped by Tim-service:
+  - Theoretical papers without immediate application
+  - Research that challenges current directions
+  - Things in adjacent fields (physics, biology, neuroscience)
+  - Negative results that update models
+
+sort: 110
