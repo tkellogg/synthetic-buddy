@@ -1,0 +1,50 @@
+# Synth Wave Discord Bot - systemd Service Unit
+#
+# Installation (on Tim's laptop):
+#   1. Copy this file to ~/.config/systemd/user/synth-wave.service
+#      mkdir -p ~/.config/systemd/user
+#      cp synth-wave.service ~/.config/systemd/user/
+#
+#   2. Reload systemd:
+#      systemctl --user daemon-reload
+#
+#   3. Enable on boot:
+#      systemctl --user enable synth-wave
+#
+#   4. Start the service:
+#      systemctl --user start synth-wave
+#
+#   5. Check status:
+#      systemctl --user status synth-wave
+#
+#   6. View logs:
+#      journalctl --user -u synth-wave -f
+#
+# Note: Uses user-level systemd (no sudo required)
+# Requires: linger enabled for auto-start on boot
+#   sudo loginctl enable-linger $USER
+
+[Unit]
+Description=Synth Wave Discord Bot (GLM-4.7-Flash)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/Users/tim/synthetic-buddy
+ExecStart=/usr/local/bin/node bot.mjs
+Restart=always
+RestartSec=10
+
+# Environment (or use .env file in WorkingDirectory)
+# EnvironmentFile=/Users/tim/synthetic-buddy/.env
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+# Resource limits - prevent runaway memory
+MemoryMax=2G
+
+[Install]
+WantedBy=default.target
