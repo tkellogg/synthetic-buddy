@@ -21,7 +21,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 
 // Configuration
-const TUNNEL_URL = process.env.TUNNEL_URL || "https://dom-replica-consciousness-lake.trycloudflare.com/v1";
+const TUNNEL_URL = process.env.TUNNEL_URL || "https://cds-early-processes-thee.trycloudflare.com/v1";
 const MODEL = process.env.MODEL || "mlx-community/GLM-4.7-Flash-4bit";
 const CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
 const BOT_USER_ID = process.env.BOT_USER_ID; // Set after first run
@@ -426,8 +426,12 @@ client.on('messageCreate', async (message) => {
   } catch (error) {
     console.error("Error processing message:", error);
 
-    // Notify channel of error
-    await message.channel.send(`*Error: ${error.message}*`);
+    // React with ❌ to signal error (don't post error text - it poisons context)
+    try {
+      await message.react('❌');
+    } catch (reactError) {
+      console.error("Failed to react:", reactError.message);
+    }
   } finally {
     processing = false;
   }
