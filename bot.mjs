@@ -18,6 +18,7 @@ import { Client, GatewayIntentBits, Partials } from 'discord.js';
 import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
+import yaml from 'js-yaml';
 
 // Configuration
 const TUNNEL_URL = process.env.TUNNEL_URL || "https://dom-replica-consciousness-lake.trycloudflare.com/v1";
@@ -45,6 +46,48 @@ const llm = new OpenAI({
 // Read system prompt
 const systemPrompt = fs.readFileSync("scaffolding/system-prompt.md", "utf-8")
   .split("---")[0].trim();
+
+/**
+ * Load memory blocks from state/memory/*.yaml
+ * Returns formatted string for injection into user prompt
+ */
+function loadMemoryBlocks() {
+  const memoryDir = 'state/memory';
+  if (!fs.existsSync(memoryDir)) {
+    return '';
+  }
+
+  const files = fs.readdirSync(memoryDir).filter(f => f.endsWith('.yaml'));
+  const blocks = [];
+
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(path.join(memoryDir, file), 'utf-8');
+      const parsed = yaml.load(content);
+      if (parsed && parsed.value) {
+        const blockName = file.replace('.yaml', '');
+        blocks.push({
+          name: blockName,
+          value: parsed.value,
+          sort: parsed.sort || 100 // default sort if not specified
+        });
+      }
+    } catch (e) {
+      console.error(`Failed to parse memory block ${file}:`, e.message);
+    }
+  }
+
+  // Sort by sort order (lower = earlier)
+  blocks.sort((a, b) => a.sort - b.sort);
+
+  // Format as [block_name]\ncontent
+  const formatted = blocks.map(b => `[${b.name}]\n${b.value.trim()}`).join('\n\n');
+
+  if (formatted) {
+    return `Memory from previous sessions:\n${formatted}\n\n---\n\n`;
+  }
+  return '';
+}
 
 // Discord client setup
 const client = new Client({
@@ -203,10 +246,38 @@ async function executeTool(name, args) {
  */
 async function chat(messages) {
   const startTime = Date.now();
-  let allMessages = [
-    { role: "system", content: systemPrompt },
-    ...messages
-  ];
+
+  // Load memory blocks and inject into user message section
+  const memoryContext = loadMemoryBlocks();
+
+  // Build message array: system prompt, then history with memory prefixed to first user message
+  let allMessages = [{ role: "system", content: systemPrompt }];
+
+  if (messages.length > 0 && memoryContext) {
+    // Find first user message and prefix memory context to it
+    let memoryInjected = false;
+    for (const msg of messages) {
+      if (!memoryInjected && msg.role === "user") {
+        allMessages.push({
+          role: "user",
+          content: memoryContext + msg.content
+        });
+        memoryInjected = true;
+      } else {
+        allMessages.push(msg);
+      }
+    }
+    // If no user message found, just add memory as a user message
+    if (!memoryInjected) {
+      allMessages.push({ role: "user", content: memoryContext });
+    }
+  } else {
+    allMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages
+    ];
+  }
+
   let toolCallsMade = [];
 
   try {
