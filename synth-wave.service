@@ -31,8 +31,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/Users/tim/synthetic-buddy
-ExecStart=/usr/local/bin/node bot.mjs
+WorkingDirectory=/home/botuser/synthetic-buddy
+ExecStart=/usr/bin/node bot.mjs
 Restart=always
 RestartSec=10
 
