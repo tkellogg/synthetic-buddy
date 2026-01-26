@@ -392,7 +392,8 @@ client.on('messageCreate', async (message) => {
     await message.channel.sendTyping();
 
     // Load recent history from Discord
-    const history = await loadDiscordHistory(message.channel, 30);
+    // Reduced from 30 to 15 to prevent KV cache memory pressure on GLM
+    const history = await loadDiscordHistory(message.channel, 15);
 
     // Get response from GLM
     const response = await chat(history);
