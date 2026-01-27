@@ -248,6 +248,66 @@ async function executeTool(name, args) {
 }
 
 /**
+ * Parse tool calls from GLM's reasoning field
+ * GLM emits XML-style tool calls: <tool_call>func_name<arg_key>key</arg_key><arg_value>val</arg_value></tool_call>
+ * The mlx-lm server puts these in the reasoning field instead of the tool_calls structure
+ */
+function parseToolCallsFromReasoning(reasoning) {
+  if (!reasoning) return [];
+
+  const toolCalls = [];
+  const toolCallRegex = /<tool_call>([\s\S]*?)<\/tool_call>/g;
+  const argKeyRegex = /<arg_key>(.*?)<\/arg_key>/g;
+  const argValueRegex = /<arg_value>(.*?)<\/arg_value>/g;
+
+  let match;
+  let callId = 0;
+
+  while ((match = toolCallRegex.exec(reasoning)) !== null) {
+    const toolContent = match[1];
+
+    // Extract function name (everything before first <arg_key> or end if no args)
+    const argKeyIndex = toolContent.indexOf('<arg_key>');
+    const funcName = argKeyIndex > 0
+      ? toolContent.substring(0, argKeyIndex).trim()
+      : toolContent.trim();
+
+    // Extract arguments
+    const args = {};
+    const keys = [];
+    const values = [];
+
+    let keyMatch;
+    while ((keyMatch = argKeyRegex.exec(toolContent)) !== null) {
+      keys.push(keyMatch[1].trim());
+    }
+
+    let valueMatch;
+    while ((valueMatch = argValueRegex.exec(toolContent)) !== null) {
+      values.push(valueMatch[1].trim());
+    }
+
+    // Pair up keys and values
+    for (let i = 0; i < Math.min(keys.length, values.length); i++) {
+      args[keys[i]] = values[i];
+    }
+
+    toolCalls.push({
+      id: `reasoning_call_${callId++}`,
+      type: 'function',
+      function: {
+        name: funcName,
+        arguments: JSON.stringify(args)
+      }
+    });
+
+    console.log(`Parsed tool call from reasoning: ${funcName}`, args);
+  }
+
+  return toolCalls;
+}
+
+/**
  * Send message to GLM and get response (with tool calling loop)
  */
 async function chat(messages) {
@@ -302,14 +362,31 @@ async function chat(messages) {
       console.log(`Finish reason: ${finishReason}`);
 
       // Check if model wants to call tools
-      if (msg.tool_calls && msg.tool_calls.length > 0) {
-        console.log(`Tool calls requested: ${msg.tool_calls.length}`);
+      // First check the standard tool_calls field (server parsed them)
+      let effectiveToolCalls = msg.tool_calls || [];
+
+      // If no tool_calls but reasoning contains <tool_call> tags, parse them
+      // This handles GLM putting tool calls in the reasoning field
+      if (effectiveToolCalls.length === 0 && msg.reasoning) {
+        const parsedCalls = parseToolCallsFromReasoning(msg.reasoning);
+        if (parsedCalls.length > 0) {
+          console.log(`Found ${parsedCalls.length} tool call(s) in reasoning field`);
+          effectiveToolCalls = parsedCalls;
+        }
+      }
+
+      if (effectiveToolCalls.length > 0) {
+        console.log(`Tool calls requested: ${effectiveToolCalls.length}`);
 
         // Add assistant message with tool calls
-        allMessages.push(msg);
+        // If we parsed from reasoning, reconstruct the message with tool_calls
+        const assistantMsg = effectiveToolCalls === msg.tool_calls
+          ? msg
+          : { ...msg, tool_calls: effectiveToolCalls };
+        allMessages.push(assistantMsg);
 
         // Execute each tool call
-        for (const toolCall of msg.tool_calls) {
+        for (const toolCall of effectiveToolCalls) {
           const name = toolCall.function.name;
           let args = {};
           try {
