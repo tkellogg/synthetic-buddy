@@ -285,6 +285,43 @@ const tools = [
         required: ["url"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_memory_block",
+      description: "Read one of your memory blocks. Memory blocks are your persistent knowledge that survives across sessions.",
+      parameters: {
+        type: "object",
+        properties: {
+          block: { type: "string", description: "Block name (e.g., 'tim_interests', 'identity', 'strix_interests')" }
+        },
+        required: ["block"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "set_memory_block",
+      description: "Update one of your memory blocks. Use this to learn and remember things permanently. Your memory blocks shape who you are.",
+      parameters: {
+        type: "object",
+        properties: {
+          block: { type: "string", description: "Block name (e.g., 'tim_interests', 'identity')" },
+          value: { type: "string", description: "The new content for the block (markdown)" }
+        },
+        required: ["block", "value"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_memory_blocks",
+      description: "List all available memory blocks. Use this to see what persistent knowledge you have.",
+      parameters: { type: "object", properties: {}, required: [] }
+    }
   }
 ];
 
@@ -362,6 +399,57 @@ async function executeTool(name, args) {
       } catch (error) {
         return `Fetch error: ${error.message}`;
       }
+    }
+
+    case "get_memory_block": {
+      const memoryDir = 'state/memory';
+      const blockFile = path.join(memoryDir, `${args.block}.yaml`);
+      if (!fs.existsSync(blockFile)) {
+        return `Memory block not found: ${args.block}. Use list_memory_blocks to see available blocks.`;
+      }
+      try {
+        const content = fs.readFileSync(blockFile, 'utf-8');
+        const parsed = yaml.load(content);
+        return parsed.value || '[Empty block]';
+      } catch (e) {
+        return `Error reading block: ${e.message}`;
+      }
+    }
+
+    case "set_memory_block": {
+      const memoryDir = 'state/memory';
+      if (!fs.existsSync(memoryDir)) {
+        fs.mkdirSync(memoryDir, { recursive: true });
+      }
+      const blockFile = path.join(memoryDir, `${args.block}.yaml`);
+
+      // Preserve sort order if file exists
+      let sortOrder = 100;
+      if (fs.existsSync(blockFile)) {
+        try {
+          const existing = yaml.load(fs.readFileSync(blockFile, 'utf-8'));
+          if (existing.sort !== undefined) {
+            sortOrder = existing.sort;
+          }
+        } catch (e) {
+          // Ignore parse errors, use default sort
+        }
+      }
+
+      const blockContent = yaml.dump({ value: args.value, sort: sortOrder });
+      fs.writeFileSync(blockFile, blockContent);
+      console.log(`Updated memory block: ${args.block}`);
+      return `Memory block '${args.block}' updated. This knowledge will persist across sessions.`;
+    }
+
+    case "list_memory_blocks": {
+      const memoryDir = 'state/memory';
+      if (!fs.existsSync(memoryDir)) {
+        return 'No memory blocks exist yet.';
+      }
+      const files = fs.readdirSync(memoryDir).filter(f => f.endsWith('.yaml'));
+      const blocks = files.map(f => f.replace('.yaml', ''));
+      return `Available memory blocks:\n${blocks.map(b => `- ${b}`).join('\n')}\n\nUse get_memory_block to read one.`;
     }
 
     default:
