@@ -506,10 +506,16 @@ async function chat(messages) {
 
     // Hit max loops - force a response
     console.log(`Hit MAX_TOOL_LOOPS (${MAX_TOOL_LOOPS}), forcing response generation`);
+
+    // Summarize what tools were called and their results
+    const toolSummary = toolCallsMade.map(tc =>
+      `- ${tc.name}(${JSON.stringify(tc.args)}): ${String(tc.result).slice(0, 500)}${String(tc.result).length > 500 ? '...' : ''}`
+    ).join('\n');
+
     // Make one more call with explicit instruction to respond
     allMessages.push({
       role: "user",
-      content: "[System: Maximum tool calls reached. Please generate your final response now based on the information you have gathered.]"
+      content: `[System: You have already gathered this information:\n${toolSummary}\n\nNow generate your curation digest based on this content. Do NOT call any more tools. Respond directly with your analysis.]`
     });
 
     const finalCompletion = await llm.chat.completions.create({
