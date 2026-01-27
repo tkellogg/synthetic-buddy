@@ -209,6 +209,20 @@ const tools = [
       description: "List files in your scaffolding/ directory",
       parameters: { type: "object", properties: {}, required: [] }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "fetch_url",
+      description: "Fetch content from a URL. Useful for reading articles, documentation, or web pages.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: { type: "string", description: "The URL to fetch" }
+        },
+        required: ["url"]
+      }
+    }
   }
 ];
 
@@ -240,6 +254,52 @@ async function executeTool(name, args) {
     case "list_files": {
       const files = fs.readdirSync('scaffolding');
       return files.join('\n');
+    }
+
+    case "fetch_url": {
+      try {
+        const response = await fetch(args.url, {
+          headers: {
+            'User-Agent': 'SynthBot/1.0 (Discord bot fetching content for AI curation)'
+          }
+        });
+        if (!response.ok) {
+          return `HTTP ${response.status}: ${response.statusText}`;
+        }
+        const contentType = response.headers.get('content-type') || '';
+
+        // Handle HTML - extract text content
+        if (contentType.includes('text/html')) {
+          const html = await response.text();
+          // Basic HTML to text: strip tags, decode entities, normalize whitespace
+          let text = html
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/\s+/g, ' ')
+            .trim();
+          // Truncate to prevent context explosion
+          if (text.length > 8000) {
+            text = text.slice(0, 8000) + '\n\n[Content truncated...]';
+          }
+          return text;
+        }
+
+        // Handle plain text
+        let text = await response.text();
+        if (text.length > 8000) {
+          text = text.slice(0, 8000) + '\n\n[Content truncated...]';
+        }
+        return text;
+      } catch (error) {
+        return `Fetch error: ${error.message}`;
+      }
     }
 
     default:
