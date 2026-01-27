@@ -164,6 +164,68 @@ function logConversation(userMessage, response, metadata = {}) {
   console.log(`Logged to ${filepath}`);
 }
 
+/**
+ * Extract URLs from conversation messages
+ * Used to correct hallucinated URLs back to actual URLs from the conversation
+ */
+function extractUrlsFromMessages(messages) {
+  const urls = [];
+  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
+
+  for (const msg of messages) {
+    const content = msg.content || '';
+    const matches = content.match(urlRegex) || [];
+    urls.push(...matches);
+  }
+
+  return [...new Set(urls)]; // dedupe
+}
+
+/**
+ * Find the best matching URL from conversation history
+ * GLM often transforms URLs (e.g., /issues/26-01-26-mcp-apps -> /2026/01/26/mcp-apps-new-rich-ui-spec/)
+ * This finds the original URL if the model's URL seems related
+ */
+function findMatchingUrl(hallucinatedUrl, conversationUrls) {
+  // Extract key parts from the hallucinated URL
+  const hallucinatedPath = new URL(hallucinatedUrl).pathname;
+
+  for (const originalUrl of conversationUrls) {
+    try {
+      const originalPath = new URL(originalUrl).pathname;
+
+      // Check if they share the same domain
+      const hallucinatedHost = new URL(hallucinatedUrl).hostname;
+      const originalHost = new URL(originalUrl).hostname;
+
+      if (hallucinatedHost === originalHost) {
+        // Same domain - check if paths share keywords
+        // Extract potential date/slug components
+        const hallucinatedParts = hallucinatedPath.split(/[-\/]/).filter(p => p.length > 2);
+        const originalParts = originalPath.split(/[-\/]/).filter(p => p.length > 2);
+
+        // Count matching parts
+        let matchCount = 0;
+        for (const part of hallucinatedParts) {
+          if (originalParts.some(op => op.includes(part) || part.includes(op))) {
+            matchCount++;
+          }
+        }
+
+        // If at least 2 parts match (e.g., date components or slug words), use original
+        if (matchCount >= 2) {
+          console.log(`URL correction: "${hallucinatedUrl}" -> "${originalUrl}" (${matchCount} matching parts)`);
+          return originalUrl;
+        }
+      }
+    } catch (e) {
+      // Invalid URL, skip
+    }
+  }
+
+  return null; // No match found
+}
+
 // Tool definitions
 const tools = [
   {
@@ -409,6 +471,9 @@ async function chat(messages) {
   const MAX_TOOL_LOOPS = 5;
   const seenToolCalls = new Set(); // Track tool+args combos to detect loops
 
+  // Extract URLs from conversation for URL correction
+  const conversationUrls = extractUrlsFromMessages(messages);
+
   try {
     // Tool calling loop - keep going until we get a final response
     while (loopCount < MAX_TOOL_LOOPS) {
@@ -495,6 +560,15 @@ async function chat(messages) {
             };
           }
           seenToolCalls.add(callSignature);
+
+          // URL correction for fetch_url - GLM often transforms URLs
+          if (name === 'fetch_url' && args.url) {
+            const correctedUrl = findMatchingUrl(args.url, conversationUrls);
+            if (correctedUrl && correctedUrl !== args.url) {
+              console.log(`Correcting URL: ${args.url} -> ${correctedUrl}`);
+              args.url = correctedUrl;
+            }
+          }
 
           const result = await executeTool(name, args);
           toolCallsMade.push({ name, args, result });
