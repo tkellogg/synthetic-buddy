@@ -462,14 +462,37 @@ async function chat(messages) {
           // Detect duplicate tool calls (same tool + same args = loop)
           const callSignature = `${name}:${JSON.stringify(args)}`;
           if (seenToolCalls.has(callSignature)) {
-            console.log(`Detected duplicate tool call: ${callSignature} - breaking loop`);
-            // Add a synthetic tool result telling model it already did this
+            console.log(`Detected duplicate tool call: ${callSignature} - forcing content generation`);
+
+            // Summarize what we have so far
+            const toolSummary = toolCallsMade.map(tc =>
+              `- ${tc.name}(${JSON.stringify(tc.args)}): ${String(tc.result).slice(0, 2000)}${String(tc.result).length > 2000 ? '...' : ''}`
+            ).join('\n');
+
+            // Add instruction to generate response
             allMessages.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: `[Already called ${name} with these args - result was already provided above. Generate your response now.]`
+              role: "user",
+              content: `[System: You already fetched this content:\n${toolSummary}\n\nGenerate your curation digest NOW based on this content. Do not call any more tools.]`
             });
-            continue;
+
+            // Make final call WITHOUT tools to force content generation
+            const forcedCompletion = await llm.chat.completions.create({
+              model: MODEL,
+              messages: allMessages,
+              tools: [], // No tools - force content generation
+              max_tokens: 4000,
+            });
+
+            const forcedMsg = forcedCompletion.choices[0].message;
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+            return {
+              content: forcedMsg.content || "[No response generated]",
+              reasoning: forcedMsg.reasoning,
+              elapsed: parseFloat(elapsed),
+              usage: forcedCompletion.usage,
+              tool_calls: toolCallsMade.length > 0 ? toolCallsMade : undefined,
+            };
           }
           seenToolCalls.add(callSignature);
 
