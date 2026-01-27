@@ -673,7 +673,24 @@ async function chat(messages) {
         continue;
       }
 
-      // No tool calls - we have our final response
+      // No tool calls - check if we have actual content
+      // If reasoning but no content, the model is still "thinking" - force another iteration
+      if (!msg.content && msg.reasoning) {
+        console.log(`Got reasoning but no content - cycling for actual response`);
+
+        // Add the reasoning as assistant context and prompt for response
+        allMessages.push({
+          role: "assistant",
+          content: `[Internal reasoning: ${msg.reasoning.slice(0, 1000)}...]`
+        });
+        allMessages.push({
+          role: "user",
+          content: `[System: Complete your response. Generate your curation digest now based on what you've gathered.]`
+        });
+        continue;
+      }
+
+      // We have actual content (or neither content nor reasoning) - return
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       console.log(`Response in ${elapsed}s (${loopCount} loop iterations)`);
       if (msg.reasoning) {
