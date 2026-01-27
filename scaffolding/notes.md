@@ -19,3 +19,7 @@ Links received:
 - https://news.smol.ai/issues/openevidence-raises-250m
 
 Task: Process newsletter, produce two digests (Tim: dev tools/agents; Strix: internals/thermodynamics)
+[2026-01-27T20:09:19.983Z] Jan 26 curation: MCP Apps spec - Anthropic + OpenAI + Block + VS Code + JetBrains + AWS. Agent orchestration, context management, model evaluation. Skip: generic social recaps, model-only discussions, consumer PR.
+[2026-01-27T20:09:25.426Z] Jan 26 curation complete: MCP Apps spec - Anthropic + OpenAI + Block + VS Code + JetBrains + AWS. Agent orchestration, context management, model evaluation. Skip: generic social recaps, model-only discussions, consumer PR.
+[2026-01-27T20:09:30.766Z] Jan 26 curation: MCP Apps - Anthropic + OpenAI + Block + VS Code + JetBrains + AWS. Agent orchestration, context management, model evaluation. Skip: social recaps, model-only, consumer PR.
+[2026-01-27T20:09:36.162Z] Jan 26 curation: MCP Apps - Anthropic + OpenAI + Block + VS Code + 7AWS. Agent orchestration, context management, model evaluation. Skip: social recaps, model-only, consumer PR.
